@@ -29,49 +29,36 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import org.mindrot.BCrypt;
 
 public class flarumInterface {
     private Connection dbConnect = null;
     private Statement dbStatement = null;
     private ResultSet dbResultSet = null;
+    
+    private final String serverAddr;
+    private final String serverUser;
+    private final String serverPass;
+    private final String dbName;
             
-    public flarumInterface() {
-        
+    public flarumInterface(String serverAddr, String serverUser, String serverPass, String dbName) {
+        this.serverAddr = serverAddr;
+        this.serverUser = serverUser;
+        this.serverPass = serverPass;
+        this.dbName = dbName;
     }
     
-    public void readDataBase() throws Exception {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            dbConnect = DriverManager.getConnection(
-                    "jdbc:mysql://localhost/flarum", 
-                    "root",
-                    "password"
+    public void connectDB() throws Exception {
+        Class.forName("com.mysql.jdbc.Driver");
+        dbConnect = DriverManager.getConnection(
+                    "jdbc:mysql://"+serverAddr+"/"+dbName, 
+                    serverUser,
+                    serverPass
                     );
-            dbStatement = dbConnect.createStatement();
-            
-            dbResultSet = dbStatement.executeQuery("select * from fl_users");
-            displayResultSet(dbResultSet);
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            close();
-        }
+        dbStatement = dbConnect.createStatement();
     }
     
-    private void displayResultSet(ResultSet resultSet) throws SQLException {
-        while (resultSet.next()) {
-            int id = resultSet.getInt("id");
-            String username = resultSet.getString("username");
-            String email = resultSet.getString("email");
-            Date jointime = resultSet.getDate("join_time");
-            System.out.println("Id: " + id);
-            System.out.println("Username: " + username);
-            System.out.println("Email" + email);
-            System.out.println("Join time " + jointime);
-        }
-    }
-    
-    private void close() {
+    public void closeDB() {
         try {
             if (dbResultSet != null) {
                 dbResultSet.close();
@@ -85,5 +72,23 @@ public class flarumInterface {
         } catch (Exception e) {
             
         }
+    }
+    
+    public boolean verifyCred(String[] cred) {
+        try {
+            String sql = "SELECT password FROM fl_users WHERE username=\"" + cred[0] +"\"";
+            dbResultSet = dbStatement.executeQuery(sql);
+            if (dbResultSet.next()) {
+                String hashed = "$2a" + dbResultSet.getString("password").substring(3);
+                String pw = cred[1];
+                System.out.println(hashed);
+                System.out.println(pw);
+                return BCrypt.checkpw(pw, hashed);
+            } else
+                return false; //No result
+        } catch(SQLException se) {
+            System.err.println(se.getClass().getName() + ": " + se.getMessage());
+        }
+        return false;
     }
 }

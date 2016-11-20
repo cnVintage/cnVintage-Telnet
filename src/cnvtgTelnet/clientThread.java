@@ -42,28 +42,29 @@ public class clientThread extends Thread {
     
     @Override
     public void run() {
+        frontEnd fend;
+        flarumInterface fif;
+        boolean continueLoop = true;
+        int lastSelection;
         try{
-            Screen screen = new TerminalScreen(terminal);
-            screen.startScreen();
-        
-            Panel panel = new Panel();
-            panel.setLayoutManager(new GridLayout(2));
-        
-            panel.addComponent(new Label("用户名"));
-            panel.addComponent(new TextBox());
-        
-            panel.addComponent(new Label("密码"));
-            panel.addComponent(new TextBox());
-        
-            panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
-            panel.addComponent(new Button("Log In 登录"));
-        
-            BasicWindow window = new BasicWindow();
-            window.setComponent(panel);
-        
-            MultiWindowTextGUI gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
-            gui.addWindowAndWait(window);
-        }catch (IOException e) {
+            fend = new frontEnd(terminal);
+            fif = new flarumInterface("localhost", "root", "password", "flarum");
+            fif.connectDB();
+            
+            while (continueLoop) {
+                lastSelection = fend.doMenu();
+                switch (lastSelection) {
+                    case 0: continueLoop = false;
+                            break;
+                    case 1: String[] cred = fend.doLogin();
+                            Boolean success = fif.verifyCred(cred);
+                            fend.showMsg("提示", success?"登录成功":"登录失败");
+                            break;
+                }
+            }
+            
+            fif.closeDB();
+        }catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }finally {
             try {
