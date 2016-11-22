@@ -60,12 +60,15 @@ public class clientThread extends Thread {
                             Boolean success = fif.verifyCred(cred);
                             fend.showMsg("提示", success?"登录成功":"登录失败");
                             break;
+                    case 2: fend.doDiscussionList(fif.getDiscussions());
+                            break;
                 }
             }
             
             fif.closeDB();
         }catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            //System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
         }finally {
             try {
                 terminal.close();

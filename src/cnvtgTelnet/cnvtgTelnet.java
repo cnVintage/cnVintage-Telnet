@@ -16,6 +16,7 @@
  */
 package cnvtgTelnet;
 
+import com.googlecode.lanterna.TerminalTextUtils;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
 import java.nio.charset.Charset;
@@ -33,6 +34,8 @@ public class cnvtgTelnet {
     public static void main(String[] args) throws Exception {
         TelnetTerminalServer server = new TelnetTerminalServer(23, Charset.forName("gbk"));
         System.out.println("Waiting for connection");
+        
+        
         while (true) {
             TelnetTerminal telnetTerminal = server.acceptConnection();
             if (telnetTerminal != null) {

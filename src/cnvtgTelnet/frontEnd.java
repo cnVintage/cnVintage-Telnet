@@ -17,9 +17,11 @@
 package cnvtgTelnet;
 
 import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.TerminalTextUtils;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.gui2.*;
 import com.googlecode.lanterna.gui2.dialogs.*;
+import com.googlecode.lanterna.gui2.table.*;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
@@ -122,5 +124,32 @@ public class frontEnd {
         resultSet[1] = txtPass.getText();
         
         return resultSet;
+    }
+    
+    public int doDiscussionList(discussion[] discussions) {
+        BasicWindow window = new BasicWindow();
+        Table<String> table = new Table<>("标题", "发起人");
+        
+        for (discussion discussion : discussions) {
+            table.getTableModel().addRow(discussion.title, discussion.startUserName);
+            System.out.println(discussion.title);
+            System.out.println(TerminalTextUtils.getColumnWidth(discussion.title));
+        }
+        
+        table.setSelectAction(new Runnable() {
+            @Override
+            public void run() {
+                selection = table.getSelectedRow();
+                window.close();
+            }
+        });
+        
+        window.setComponent(table);
+        window.setTitle("主题列表");
+        window.setHints(Arrays.asList(Window.Hint.FULL_SCREEN));
+        
+        this.gui.addWindowAndWait(window);
+        
+        return selection;
     }
 }

@@ -22,6 +22,7 @@ package cnvtgTelnet;
  * @author zephray
  */
 
+import cnvtgTelnet.discussion;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -40,7 +41,7 @@ public class flarumInterface {
     private final String serverUser;
     private final String serverPass;
     private final String dbName;
-            
+    
     public flarumInterface(String serverAddr, String serverUser, String serverPass, String dbName) {
         this.serverAddr = serverAddr;
         this.serverUser = serverUser;
@@ -90,5 +91,47 @@ public class flarumInterface {
             System.err.println(se.getClass().getName() + ": " + se.getMessage());
         }
         return false;
+    }
+    
+    public discussion[] getDiscussions() {
+        discussion[] discussionSet;
+        try {
+            String sql;
+            int discussionCount;
+            sql =   "SELECT fl_discussions.id, fl_discussions.title, " +
+                    "       fl_discussions.comments_count, fl_discussions.last_time, " +
+                    "       fl_discussions.start_user_id, fl_discussions.last_user_id, " +
+                    "       fl_discussions.is_sticky, " +
+                    "       user1.avatar_path, user1.username as start_user_name, " +
+                    "       user2.username as last_user_name " +
+                    "FROM  fl_discussions " +
+                    "INNER JOIN fl_users user1 " +
+                    "   ON user1.id = start_user_id " +
+                    "INNER JOIN fl_users user2 " +
+                    "   ON user2.id = last_user_id " +
+                    "ORDER BY fl_discussions.last_time DESC";
+            dbResultSet = dbStatement.executeQuery(sql);
+            dbResultSet.last();
+            discussionCount = dbResultSet.getRow();
+            System.out.print(discussionCount); System.out.println(" discussions in total.");
+            discussionSet = new discussion[discussionCount];
+            dbResultSet.first();
+            for (int i = 0; i < discussionCount; i++) {
+                discussionSet[i] = new discussion();
+                discussionSet[i].isSticky = dbResultSet.getBoolean("is_sticky");
+                discussionSet[i].lastTime = dbResultSet.getDate("last_time");
+                discussionSet[i].lastUserId = dbResultSet.getInt("last_user_id");
+                discussionSet[i].lastUserName = dbResultSet.getString("last_user_name");
+                discussionSet[i].startUserId = dbResultSet.getInt("start_user_id");
+                discussionSet[i].startUserName = dbResultSet.getString("start_user_name");
+                discussionSet[i].title = dbResultSet.getString("title");
+                dbResultSet.next();
+            }
+            
+            return discussionSet;
+        } catch(SQLException se) {
+            System.err.println(se.getClass().getName() + ": " + se.getMessage());
+        }
+        return null;
     }
 }
