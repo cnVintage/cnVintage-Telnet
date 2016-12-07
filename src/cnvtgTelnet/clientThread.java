@@ -33,22 +33,22 @@ import java.io.IOException;
  *
  * @author zephray
  */
-public class clientThread extends Thread {
+public class ClientThread extends Thread {
     private final TelnetTerminal terminal;
     
-    public clientThread(TelnetTerminal terminal) {
+    public ClientThread(TelnetTerminal terminal) {
         this.terminal = terminal;
     }
     
     @Override
     public void run() {
-        frontEnd fend;
-        flarumInterface fif;
+        FrontEnd fend;
+        FlarumInterface fif;
         boolean continueLoop = true;
         int lastSelection;
         try{
-            fend = new frontEnd(terminal);
-            fif = new flarumInterface("localhost", "root", "password", "flarum");
+            fend = new FrontEnd(terminal);
+            fif = new FlarumInterface("localhost", "root", "123456", "flarum");
             fif.connectDB();
             
             while (continueLoop) {
@@ -60,7 +60,9 @@ public class clientThread extends Thread {
                             Boolean success = fif.verifyCred(cred);
                             fend.showMsg("提示", success?"登录成功":"登录失败");
                             break;
-                    case 2: fend.doDiscussionList(fif.getDiscussions());
+                    case 2: while ((lastSelection = fend.doDiscussionList(fif.getDiscussions()))!= -1) {
+                                fend.doPostView(fif.getPosts(lastSelection));
+                            }
                             break;
                 }
             }

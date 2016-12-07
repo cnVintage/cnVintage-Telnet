@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
  * @author zephray
  */
 
-public class cnvtgTelnet {
+public class CnvtgTelnet {
 
     /**
      * @param args the command line arguments
@@ -33,6 +33,7 @@ public class cnvtgTelnet {
      */
     public static void main(String[] args) throws Exception {
         TelnetTerminalServer server = new TelnetTerminalServer(23, Charset.forName("gbk"));
+        //TelnetTerminalServer server = new TelnetTerminalServer(23);
         System.out.println("Waiting for connection");
         
         
@@ -40,7 +41,7 @@ public class cnvtgTelnet {
             TelnetTerminal telnetTerminal = server.acceptConnection();
             if (telnetTerminal != null) {
                 System.out.println("Connected!");
-                new clientThread(telnetTerminal).start();
+                new ClientThread(telnetTerminal).start();
             }
         }
     }

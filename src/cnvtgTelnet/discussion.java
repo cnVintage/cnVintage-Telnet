@@ -22,7 +22,8 @@ import java.util.Date;
  *
  * @author zephray
  */
-public class discussion {
+public class Discussion {
+    public int id;
     public String title;
     public int startUserId;
     public String startUserName;

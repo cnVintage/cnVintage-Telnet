@@ -22,7 +22,7 @@ package cnvtgTelnet;
  * @author zephray
  */
 
-import cnvtgTelnet.discussion;
+import cnvtgTelnet.Discussion;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -32,7 +32,7 @@ import java.sql.Statement;
 import java.util.Date;
 import org.mindrot.BCrypt;
 
-public class flarumInterface {
+public class FlarumInterface {
     private Connection dbConnect = null;
     private Statement dbStatement = null;
     private ResultSet dbResultSet = null;
@@ -42,7 +42,7 @@ public class flarumInterface {
     private final String serverPass;
     private final String dbName;
     
-    public flarumInterface(String serverAddr, String serverUser, String serverPass, String dbName) {
+    public FlarumInterface(String serverAddr, String serverUser, String serverPass, String dbName) {
         this.serverAddr = serverAddr;
         this.serverUser = serverUser;
         this.serverPass = serverPass;
@@ -93,8 +93,8 @@ public class flarumInterface {
         return false;
     }
     
-    public discussion[] getDiscussions() {
-        discussion[] discussionSet;
+    public Discussion[] getDiscussions() {
+        Discussion[] discussionSet;
         try {
             String sql;
             int discussionCount;
@@ -102,7 +102,7 @@ public class flarumInterface {
                     "       fl_discussions.comments_count, fl_discussions.last_time, " +
                     "       fl_discussions.start_user_id, fl_discussions.last_user_id, " +
                     "       fl_discussions.is_sticky, " +
-                    "       user1.avatar_path, user1.username as start_user_name, " +
+                    "       user1.username as start_user_name, " +
                     "       user2.username as last_user_name " +
                     "FROM  fl_discussions " +
                     "INNER JOIN fl_users user1 " +
@@ -114,10 +114,11 @@ public class flarumInterface {
             dbResultSet.last();
             discussionCount = dbResultSet.getRow();
             System.out.print(discussionCount); System.out.println(" discussions in total.");
-            discussionSet = new discussion[discussionCount];
+            discussionSet = new Discussion[discussionCount];
             dbResultSet.first();
             for (int i = 0; i < discussionCount; i++) {
-                discussionSet[i] = new discussion();
+                discussionSet[i] = new Discussion();
+                discussionSet[i].id = dbResultSet.getInt("id");
                 discussionSet[i].isSticky = dbResultSet.getBoolean("is_sticky");
                 discussionSet[i].lastTime = dbResultSet.getDate("last_time");
                 discussionSet[i].lastUserId = dbResultSet.getInt("last_user_id");
@@ -129,6 +130,44 @@ public class flarumInterface {
             }
             
             return discussionSet;
+        } catch(SQLException se) {
+            System.err.println(se.getClass().getName() + ": " + se.getMessage());
+        }
+        return null;
+    }
+    
+    public Post[] getPosts(int discussionId) {
+        Post[] postSet;
+        try {
+            String sql;
+            int postCount;
+            sql =   "SELECT fl_posts.content, fl_posts.time, fl_posts.user_id, " +
+                    "       fl_discussions.title, " + 
+                    "       fl_users.username " + 
+                    "FROM fl_posts " +
+                    "INNER JOIN fl_users " +
+                    "ON fl_users.id = fl_posts.user_id " +
+                    "INNER JOIN fl_discussions " +
+                    "ON fl_discussions.id = discussion_id " +
+                    "WHERE fl_discussions.id = "+ discussionId +
+                    " AND fl_posts.hide_user_id IS NULL AND fl_posts.type = 'comment';";
+            dbResultSet = dbStatement.executeQuery(sql);
+            dbResultSet.last();
+            postCount = dbResultSet.getRow();
+            System.out.print(postCount); System.out.println(" posts in total.");
+            postSet = new Post[postCount];
+            dbResultSet.first();
+            for (int i = 0; i < postCount; i++) {
+                postSet[i] = new Post();
+                postSet[i].title = dbResultSet.getString("title");
+                postSet[i].content = dbResultSet.getString("content");
+                postSet[i].date = dbResultSet.getDate("time");
+                postSet[i].userId = dbResultSet.getInt("user_id");
+                postSet[i].userName = dbResultSet.getString("username");
+                dbResultSet.next();
+            }
+            
+            return postSet;
         } catch(SQLException se) {
             System.err.println(se.getClass().getName() + ": " + se.getMessage());
         }

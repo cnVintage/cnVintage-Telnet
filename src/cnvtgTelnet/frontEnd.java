@@ -18,7 +18,10 @@ package cnvtgTelnet;
 
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TerminalTextUtils;
+import static com.googlecode.lanterna.TerminalTextUtils.getWordWrappedText;
+import static com.googlecode.lanterna.TerminalTextUtils.isCharDoubleWidth;
 import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.graphics.SimpleTheme;
 import com.googlecode.lanterna.gui2.*;
 import com.googlecode.lanterna.gui2.dialogs.*;
 import com.googlecode.lanterna.gui2.table.*;
@@ -32,23 +35,30 @@ import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
 import java.util.Arrays;
 import java.io.IOException;
-
+import java.text.BreakIterator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import net.htmlparser.jericho.*;
 /**
  *
  * @author zephray
  */
-public class frontEnd {
+public class FrontEnd {
     private final TelnetTerminal terminal;
     private final Screen screen;
     private final MultiWindowTextGUI gui;
     private int selection = 0;
+    private ResourceBundle lang;
     
-    public frontEnd(TelnetTerminal terminal) throws IOException {
+    public FrontEnd(TelnetTerminal terminal) throws IOException {
         System.out.println("Creating a new frontEnd");
         this.terminal = terminal;
         this.screen = new TerminalScreen(terminal);
         screen.startScreen();
         this.gui = new MultiWindowTextGUI(this.screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
+        lang = ResourceBundle.getBundle("cnvtgTelnet/zh_CN");
     }
     
     public void showMsg(String title, String msg) throws IOException {
@@ -60,23 +70,23 @@ public class frontEnd {
         TerminalSize size = new TerminalSize(14, 10);
         ActionListBox actionListBox = new ActionListBox(size);
         
-        actionListBox.addItem("登录", () -> {
+        actionListBox.addItem(lang.getString("login"), () -> {
             selection = 1;
             window.close();
         });
         
-        actionListBox.addItem("浏览帖子列表", () -> {
+        actionListBox.addItem(lang.getString("discussionList"), () -> {
             selection = 2;
             window.close();
         });
         
-        actionListBox.addItem("退出", () -> {
+        actionListBox.addItem(lang.getString("exit"), () -> {
             selection = 0;
             window.close();
         });
         
         window.setComponent(actionListBox);
-        window.setTitle("主菜单");
+        window.setTitle(lang.getString("mainMenu"));
         
         this.gui.addWindowAndWait(window);
         
@@ -99,23 +109,23 @@ public class frontEnd {
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
             
-        panel.addComponent(new Label("用户名"));
+        panel.addComponent(new Label(lang.getString("username")));
         panel.addComponent(txtUser);
             
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
         
-        panel.addComponent(new Label("密码"));
+        panel.addComponent(new Label(lang.getString("password")));
         panel.addComponent(txtPass);
             
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
         
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
-        panel.addComponent(new Button("Log In 登录", window::close));  
+        panel.addComponent(new Button(lang.getString("loginButton"), window::close));  
 
         window.setComponent(panel);
-        window.setTitle("欢迎访问cnVintage");
+        window.setTitle(lang.getString("welcome"));
         window.setHints(Arrays.asList(Window.Hint.CENTERED));
         
         this.gui.addWindowAndWait(window);
@@ -126,11 +136,21 @@ public class frontEnd {
         return resultSet;
     }
     
-    public int doDiscussionList(discussion[] discussions) {
+    public int doDiscussionList(Discussion[] discussions) {
         BasicWindow window = new BasicWindow();
-        Table<String> table = new Table<>("标题", "发起人");
+        Table<String> table = new Table<String>(lang.getString("title"), lang.getString("author")) {
+            @Override
+            public Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
+                if (keyStroke.equals(new KeyStroke(KeyType.Escape, false, false))) {
+                    selection = -1;
+                    window.close();
+                    return Interactable.Result.HANDLED;
+                } else
+                    return super.handleKeyStroke(keyStroke);
+            }
+        };
         
-        for (discussion discussion : discussions) {
+        for (Discussion discussion : discussions) {
             table.getTableModel().addRow(discussion.title, discussion.startUserName);
             System.out.println(discussion.title);
             System.out.println(TerminalTextUtils.getColumnWidth(discussion.title));
@@ -139,17 +159,93 @@ public class frontEnd {
         table.setSelectAction(new Runnable() {
             @Override
             public void run() {
-                selection = table.getSelectedRow();
+                selection = discussions[table.getSelectedRow()].id;
                 window.close();
             }
         });
         
         window.setComponent(table);
-        window.setTitle("主题列表");
+        window.setTitle(lang.getString("discussionList"));
         window.setHints(Arrays.asList(Window.Hint.FULL_SCREEN));
         
         this.gui.addWindowAndWait(window);
         
         return selection;
+    }
+    
+    private String formatLines(String target, int maxLength) {
+
+        List<String> result = getWordWrappedText(maxLength, target);
+        
+        return String.join("\n", result);
+    }
+    
+    private String cleanHtml(String source) {
+        Source htmlSource = new Source(source);
+        Segment htmlSeg = new Segment(htmlSource, 0, htmlSource.length());
+        Renderer htmlRend = new Renderer(htmlSeg);
+        return htmlRend.toString();
+    }
+    
+    public void doPostView(Post[] posts) {
+        BasicWindow window = new BasicWindow();
+        Panel panel = new Panel();
+        Label title = new Label("");
+        //-1 for Scrollbar fix
+        TextBox textBox = new TextBox(screen.getTerminalSize().withRelative(-1, -2)) {
+            //Little bit of hack, after create, handleKeyStroke would be called to
+            //set this to 0 and display content.
+            private int currentPostPos = 1; 
+
+            public void updatePost() {
+                this.setText(formatLines(cleanHtml(posts[currentPostPos].content), this.getSize().getColumns()-4));
+                title.setText(posts[0].title + " " +
+                        posts[currentPostPos].userName + lang.getString("postIn") + 
+                        posts[currentPostPos].date.toString() + 
+                        " (" + Integer.toString(currentPostPos + 1) + "/" +
+                        Integer.toString(posts.length) + ")");
+            }
+            
+            @Override
+            public Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
+                if (keyStroke.equals(new KeyStroke(KeyType.Escape, false, false))) {
+                    window.close();
+                    return Interactable.Result.HANDLED;
+                } else if (keyStroke.equals(new KeyStroke('-', false, false))) {
+                    if (currentPostPos > 0) {
+                        currentPostPos --;
+                        this.updatePost();
+                    }   
+                    return Interactable.Result.HANDLED;
+                } else if (keyStroke.equals(new KeyStroke('=', false, false))) {
+                    if (currentPostPos < posts.length - 1) {
+                        currentPostPos ++;
+                        this.updatePost();
+                    }   
+                    return Interactable.Result.HANDLED;
+                } else
+                    return super.handleKeyStroke(keyStroke);
+            }
+        };
+        WindowListenerAdapter listener = new WindowListenerAdapter() {
+            @Override
+            public void onResized(Window window, TerminalSize oldSize, TerminalSize newSize) {
+                textBox.setSize(newSize.withRelative(-1, -2));
+            }
+        };
+        window.addWindowListener(listener);
+        SimpleTheme theme = new SimpleTheme(TextColor.ANSI.WHITE, TextColor.ANSI.BLACK);
+        textBox.setSize(screen.getTerminalSize().withRelative(-1, -2));
+        textBox.setTheme(theme);
+        textBox.setReadOnly(true);
+        textBox.handleKeyStroke(new KeyStroke('-', false, false));
+        panel.addComponent(title);
+        panel.addComponent(textBox);
+        panel.addComponent(new Label(lang.getString("postHint")));
+        
+        window.setComponent(panel);
+        window.setHints(Arrays.asList(Window.Hint.FULL_SCREEN, Window.Hint.NO_DECORATIONS));
+        
+        this.gui.addWindowAndWait(window);
     }
 }
