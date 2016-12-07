@@ -10,11 +10,13 @@ Lanterna used in this project: https://github.com/nbzwt/lanterna
 
 ## Todo
 - [X] Basic Telnet Server.
-- [ ] Browse topic.
-- [ ] View topic.
+- [X] Browse topic.
+- [X] View topic.
 - [ ] Search.
 - [ ] User page.
-- [ ] Login and reply.
+- [X] Login.
+- [ ] Reply.
+- [ ] New discussion.
 - [ ] LaTeX render.
 - [ ] JPG/PNG to ASCII art.
 
