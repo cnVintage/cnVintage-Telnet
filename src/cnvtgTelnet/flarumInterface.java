@@ -22,7 +22,6 @@ package cnvtgTelnet;
  * @author zephray
  */
 
-import cnvtgTelnet.Discussion;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -76,6 +75,11 @@ public class FlarumInterface {
     }
     
     public boolean verifyCred(String[] cred) {
+        if ((cred[0].indexOf(' ')!=-1) || 
+            (cred[0].indexOf(';')!=-1) ||  
+            (cred[0].indexOf('\\')!=-1) ||  
+            (cred[0].indexOf('*')!=-1))
+            return false;
         try {
             String sql = "SELECT password FROM fl_users WHERE username=\"" + cred[0] +"\"";
             dbResultSet = dbStatement.executeQuery(sql);

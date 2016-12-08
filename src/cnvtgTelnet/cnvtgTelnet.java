@@ -32,7 +32,7 @@ public class CnvtgTelnet {
      * @throws java.lang.Exception
      */
     public static void main(String[] args) throws Exception {
-        TelnetTerminalServer server = new TelnetTerminalServer(23, Charset.forName("gbk"));
+        TelnetTerminalServer server = new TelnetTerminalServer(23, Charset.forName("utf-8"));
         //TelnetTerminalServer server = new TelnetTerminalServer(23);
         System.out.println("Waiting for connection");
         

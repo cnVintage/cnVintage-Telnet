@@ -28,6 +28,7 @@ import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  *
@@ -45,6 +46,7 @@ public class ClientThread extends Thread {
         FrontEnd fend;
         FlarumInterface fif;
         boolean continueLoop = true;
+        boolean fallbackGBK = false;
         int lastSelection;
         try{
             fend = new FrontEnd(terminal);
@@ -62,6 +64,14 @@ public class ClientThread extends Thread {
                             break;
                     case 2: while ((lastSelection = fend.doDiscussionList(fif.getDiscussions()))!= -1) {
                                 fend.doPostView(fif.getPosts(lastSelection));
+                            }
+                            break;
+                    case 3: if (fallbackGBK) {
+                                terminal.setCharset(Charset.forName("utf-8"));
+                                fallbackGBK = false;
+                            } else {
+                                terminal.setCharset(Charset.forName("gbk"));
+                                fallbackGBK = true;
                             }
                             break;
                 }

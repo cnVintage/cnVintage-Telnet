@@ -52,6 +52,14 @@ public class FrontEnd {
     private int selection = 0;
     private ResourceBundle lang;
     
+    private final String mainGreet = 
+            "          __     ___       _                   \n" +
+            "   ___ _ _\\ \\   / (_)_ __ | |_ __ _  __ _  ___ \n" +
+            "  / __| '_ \\ \\ / /| | '_ \\| __/ _` |/ _` |/ _ \\\n" +
+            " | (__| | | \\ V / | | | | | || (_| | (_| |  __/\n" +
+            "  \\___|_| |_|\\_/  |_|_| |_|\\__\\__,_|\\__, |\\___|\n" +
+            "                                    |___/      ";
+    
     public FrontEnd(TelnetTerminal terminal) throws IOException {
         System.out.println("Creating a new frontEnd");
         this.terminal = terminal;
@@ -67,8 +75,11 @@ public class FrontEnd {
     
     public int doMenu() throws IOException {
         BasicWindow window = new BasicWindow();
-        TerminalSize size = new TerminalSize(14, 10);
-        ActionListBox actionListBox = new ActionListBox(size);
+        Panel panel = new Panel();
+        ActionListBox actionListBox = new ActionListBox(new TerminalSize(50, 4));
+        TextBox textBox = new TextBox(new TerminalSize(50,6));
+        
+        textBox.setText(mainGreet);
         
         actionListBox.addItem(lang.getString("login"), () -> {
             selection = 1;
@@ -80,12 +91,20 @@ public class FrontEnd {
             window.close();
         });
         
+        actionListBox.addItem(lang.getString("switchCharset"), () -> {
+            selection = 3;
+            window.close();
+        });
+        
         actionListBox.addItem(lang.getString("exit"), () -> {
             selection = 0;
             window.close();
         });
         
-        window.setComponent(actionListBox);
+        panel.addComponent(textBox);
+        panel.addComponent(actionListBox);
+        
+        window.setComponent(panel);
         window.setTitle(lang.getString("mainMenu"));
         
         this.gui.addWindowAndWait(window);
@@ -175,7 +194,7 @@ public class FrontEnd {
     
     private String formatLines(String target, int maxLength) {
 
-        List<String> result = getWordWrappedText(maxLength, target);
+        List<String> result = getWordWrappedText(maxLength, target.split("\n"));
         
         return String.join("\n", result);
     }
