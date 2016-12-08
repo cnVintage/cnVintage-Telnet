@@ -113,6 +113,7 @@ public class FlarumInterface {
                     "   ON user1.id = start_user_id " +
                     "INNER JOIN fl_users user2 " +
                     "   ON user2.id = last_user_id " +
+                    "WHERE fl_discussions.comments_count != 0 " +
                     "ORDER BY fl_discussions.last_time DESC";
             dbResultSet = dbStatement.executeQuery(sql);
             dbResultSet.last();
