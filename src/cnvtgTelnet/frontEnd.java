@@ -77,9 +77,11 @@ public class FrontEnd {
         BasicWindow window = new BasicWindow();
         Panel panel = new Panel();
         ActionListBox actionListBox = new ActionListBox(new TerminalSize(50, 4));
-        TextBox textBox = new TextBox(new TerminalSize(50,6));
+        Label lblGreet = new Label(mainGreet);
         
-        textBox.setText(mainGreet);
+        //TextBox textBox = new TextBox(new TerminalSize(50,6));
+        
+        //textBox.setText(mainGreet);
         
         actionListBox.addItem(lang.getString("login"), () -> {
             selection = 1;
@@ -91,21 +93,22 @@ public class FrontEnd {
             window.close();
         });
         
-        actionListBox.addItem(lang.getString("switchCharset"), () -> {
-            selection = 3;
-            window.close();
-        });
-        
         actionListBox.addItem(lang.getString("exit"), () -> {
             selection = 0;
             window.close();
         });
         
-        panel.addComponent(textBox);
+        actionListBox.addItem(lang.getString("switchCharset"), () -> {
+            selection = 3;
+            window.close();
+        });
+        
+        panel.addComponent(lblGreet);
         panel.addComponent(actionListBox);
         
         window.setComponent(panel);
         window.setTitle(lang.getString("mainMenu"));
+        window.setHints(Arrays.asList(Window.Hint.CENTERED));
         
         this.gui.addWindowAndWait(window);
         
@@ -250,6 +253,7 @@ public class FrontEnd {
             @Override
             public void onResized(Window window, TerminalSize oldSize, TerminalSize newSize) {
                 textBox.setSize(newSize.withRelative(-1, -2));
+                super.onResized(window, oldSize, newSize);
             }
         };
         window.addWindowListener(listener);
