@@ -160,6 +160,8 @@ public class FrontEnd {
     
     public int doDiscussionList(Discussion[] discussions) {
         BasicWindow window = new BasicWindow();
+        Panel panel = new Panel();
+        
         Table<String> table = new Table<String>(lang.getString("title"), lang.getString("author")) {
             @Override
             public Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
@@ -174,8 +176,6 @@ public class FrontEnd {
         
         for (Discussion discussion : discussions) {
             table.getTableModel().addRow(discussion.title, discussion.startUserName);
-            System.out.println(discussion.title);
-            System.out.println(TerminalTextUtils.getColumnWidth(discussion.title));
         }
         
         table.setSelectAction(new Runnable() {
@@ -186,7 +186,12 @@ public class FrontEnd {
             }
         });
         
-        window.setComponent(table);
+        table.setVisibleColumns(screen.getTerminalSize().getColumns()-3);
+        table.setVisibleRows(screen.getTerminalSize().getRows()-3);
+        
+        panel.addComponent(table);
+
+        window.setComponent(panel);
         window.setTitle(lang.getString("discussionList"));
         window.setHints(Arrays.asList(Window.Hint.FULL_SCREEN));
         
