@@ -79,14 +79,10 @@ public class FrontEnd {
         ActionListBox actionListBox = new ActionListBox(new TerminalSize(50, 4));
         Label lblGreet = new Label(mainGreet);
         
-        //TextBox textBox = new TextBox(new TerminalSize(50,6));
-        
-        //textBox.setText(mainGreet);
-        
-        actionListBox.addItem(lang.getString("login"), () -> {
+        /*actionListBox.addItem(lang.getString("login"), () -> {
             selection = 1;
             window.close();
-        });
+        });*/
         
         actionListBox.addItem(lang.getString("discussionList"), () -> {
             selection = 2;
@@ -186,14 +182,21 @@ public class FrontEnd {
             }
         });
         
-        table.setVisibleColumns(screen.getTerminalSize().getColumns()-3);
-        table.setVisibleRows(screen.getTerminalSize().getRows()-3);
+        WindowListenerAdapter listener = new WindowListenerAdapter() {
+            @Override
+            public void onResized(Window window, TerminalSize oldSize, TerminalSize newSize) {
+                table.setVisibleColumns(newSize.getColumns()-1);
+                table.setVisibleRows(newSize.getRows());
+                super.onResized(window, oldSize, newSize);
+            }
+        };
         
         panel.addComponent(table);
 
         window.setComponent(panel);
         window.setTitle(lang.getString("discussionList"));
         window.setHints(Arrays.asList(Window.Hint.FULL_SCREEN));
+        window.addWindowListener(listener);
         
         this.gui.addWindowAndWait(window);
         
