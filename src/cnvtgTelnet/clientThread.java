@@ -29,6 +29,8 @@ import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  *
@@ -46,44 +48,45 @@ public class ClientThread extends Thread {
         FrontEnd fend;
         FlarumInterface fif;
         boolean continueLoop = true;
-        boolean fallbackGBK = false;
         int lastSelection;
         try{
             fend = new FrontEnd(terminal);
             fif = new FlarumInterface("localhost", "root", "123456", "flarum");
-            fif.connectDB();
+            InetSocketAddress socketAddress = (InetSocketAddress)terminal.getRemoteSocketAddress();
+            InetAddress inetAddress = socketAddress.getAddress();
+            String ip = inetAddress.getHostAddress();
+            System.out.println(ip);
+            String cred[] = fif.verifyIP(ip);
+            if (cred == null) continueLoop = false; else
+            {
+                fend.doCharsetSet();
+                Boolean success = fend.doLogin(cred);
+                fend.showMsg("提示", success?"登录成功":"登录失败");
+                if (success != true) continueLoop = false;
+            }
+            //fif.connectDB();
             
             while (continueLoop) {
                 lastSelection = fend.doMenu();
                 switch (lastSelection) {
                     case 0: continueLoop = false;
                             break;
-                    case 1: String[] cred = fend.doLogin();
-                            Boolean success = fif.verifyCred(cred);
-                            fend.showMsg("提示", success?"登录成功":"登录失败");
-                            break;
                     case 2: while ((lastSelection = fend.doDiscussionList(fif.getDiscussions()))!= -1) {
                                 fend.doPostView(fif.getPosts(lastSelection));
                             }
                             break;
-                    case 3: if (fallbackGBK) {
-                                terminal.setCharset(Charset.forName("utf-8"));
-                                fallbackGBK = false;
-                            } else {
-                                terminal.setCharset(Charset.forName("gbk"));
-                                fallbackGBK = true;
-                            }
-                            break;
                 }
             }
-            
-            fif.closeDB();
-        }catch (Exception e) {
+            //fif.closeDB();
+        } catch (java.lang.IllegalStateException e) {
+            System.out.print("One fucking bot.");
+        } catch (Exception e) {
             //System.err.println(e.getClass().getName() + ": " + e.getMessage());
             e.printStackTrace();
         }finally {
             try {
                 terminal.close();
+                System.out.println("Disconnected.");
             }catch (IOException e) {
                 System.err.println(e.getClass().getName() + ": " + e.getMessage());
             }

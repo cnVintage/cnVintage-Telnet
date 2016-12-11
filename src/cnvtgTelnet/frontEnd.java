@@ -35,6 +35,7 @@ import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
 import java.util.Arrays;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,36 @@ public class FrontEnd {
         lang = ResourceBundle.getBundle("cnvtgTelnet/zh_CN");
     }
     
+    public void doCharsetSet() throws IOException {
+        BasicWindow window = new BasicWindow();
+        Panel panel = new Panel();
+        Label lbl1 = new Label("如果你能读懂这句话，请选择UTF-8");
+        Label lbl2 = new Label("If it is gibberish, choose GBK.");
+        Label lbl3 = new Label("Please choose your charset:");
+        Button buttonUnicode = new Button("UTF-8", new Runnable() {
+            @Override
+            public void run() {
+                terminal.setCharset(Charset.forName("utf8"));
+                window.close();
+            }
+        });
+        Button buttonGBK = new Button("GBK", new Runnable() {
+            @Override
+            public void run() {
+                terminal.setCharset(Charset.forName("gbk"));
+                window.close();
+            }
+        });
+        panel.addComponent(lbl1);
+        panel.addComponent(lbl2);
+        panel.addComponent(lbl3);
+        panel.addComponent(buttonUnicode);
+        panel.addComponent(buttonGBK);
+        window.setComponent(panel);
+        window.setHints(Arrays.asList(Window.Hint.FULL_SCREEN, Window.Hint.NO_DECORATIONS));
+        this.gui.addWindowAndWait(window);
+    }
+    
     public void showMsg(String title, String msg) throws IOException {
         MessageDialog.showMessageDialog(this.gui, title, msg);
     }
@@ -94,11 +125,6 @@ public class FrontEnd {
             window.close();
         });
         
-        actionListBox.addItem(lang.getString("switchCharset"), () -> {
-            selection = 3;
-            window.close();
-        });
-        
         panel.addComponent(lblGreet);
         panel.addComponent(actionListBox);
         
@@ -111,33 +137,31 @@ public class FrontEnd {
         return this.selection;
     }
     
-    public String[] doLogin() throws IOException
+    public boolean doLogin(String[] cred) throws IOException
     {
         BasicWindow window = new BasicWindow();
-        String[] resultSet = new String[2];
-        
+
         System.out.println("Creating a new window");
         Panel panel = new Panel();
         panel.setLayoutManager(new GridLayout(2));
         
-        TextBox txtUser = new TextBox();
         TextBox txtPass = new TextBox();
         txtPass.setMask('*');
 
-        panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
-        panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
+        panel.addComponent(new EmptySpace(new TerminalSize(0,1)));
+        panel.addComponent(new EmptySpace(new TerminalSize(0,1)));
             
-        panel.addComponent(new Label(lang.getString("username")));
-        panel.addComponent(txtUser);
+        panel.addComponent(new Label(lang.getString("welcomeBack")));
+        panel.addComponent(new Label(cred[0]));
             
-        panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
-        panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
+        panel.addComponent(new EmptySpace(new TerminalSize(0,1)));
+        panel.addComponent(new EmptySpace(new TerminalSize(0,1)));
         
-        panel.addComponent(new Label(lang.getString("password")));
+        panel.addComponent(new Label(lang.getString("token")));
         panel.addComponent(txtPass);
             
-        panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
-        panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
+        panel.addComponent(new EmptySpace(new TerminalSize(0,1)));
+        panel.addComponent(new EmptySpace(new TerminalSize(0,1)));
         
         panel.addComponent(new EmptySpace(new TerminalSize(0,0)));
         panel.addComponent(new Button(lang.getString("loginButton"), window::close));  
@@ -148,10 +172,7 @@ public class FrontEnd {
         
         this.gui.addWindowAndWait(window);
             
-        resultSet[0] = txtUser.getText();
-        resultSet[1] = txtPass.getText();
-        
-        return resultSet;
+        return (cred[1].equals(txtPass.getText()));
     }
     
     public int doDiscussionList(Discussion[] discussions) {
@@ -186,7 +207,7 @@ public class FrontEnd {
             @Override
             public void onResized(Window window, TerminalSize oldSize, TerminalSize newSize) {
                 table.setVisibleColumns(newSize.getColumns()-1);
-                table.setVisibleRows(newSize.getRows());
+                table.setVisibleRows(newSize.getRows()-1);
                 super.onResized(window, oldSize, newSize);
             }
         };

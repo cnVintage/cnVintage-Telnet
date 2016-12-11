@@ -48,7 +48,7 @@ public class FlarumInterface {
         this.dbName = dbName;
     }
     
-    public void connectDB() throws Exception {
+    private void connectDB() throws Exception {
         Class.forName("com.mysql.jdbc.Driver");
         dbConnect = DriverManager.getConnection(
                     "jdbc:mysql://"+serverAddr+"/"+dbName, 
@@ -58,7 +58,7 @@ public class FlarumInterface {
         dbStatement = dbConnect.createStatement();
     }
     
-    public void closeDB() {
+    private void closeDB() {
         try {
             if (dbResultSet != null) {
                 dbResultSet.close();
@@ -74,31 +74,39 @@ public class FlarumInterface {
         }
     }
     
-    public boolean verifyCred(String[] cred) {
-        if ((cred[0].indexOf(' ')!=-1) || 
-            (cred[0].indexOf(';')!=-1) ||  
-            (cred[0].indexOf('\\')!=-1) ||  
-            (cred[0].indexOf('*')!=-1))
-            return false;
+    public String[] verifyIP(String ip) throws Exception {
+        if ((ip.indexOf(' ')!=-1) || 
+            (ip.indexOf(';')!=-1) ||  
+            (ip.indexOf('\"')!=-1) ||  
+            (ip.indexOf('\'')!=-1))
+            return null;
+        this.connectDB();
         try {
-            String sql = "SELECT password FROM fl_users WHERE username=\"" + cred[0] +"\"";
+            String sql = "SELECT fl_telnet_access_tokens.access_token, fl_users.username FROM fl_telnet_access_tokens " +
+                        "INNER JOIN fl_users " +
+                        "ON fl_users.id = fl_telnet_access_tokens.user_id " +
+                        "WHERE fl_telnet_access_tokens.remote_addr = \"" + ip +"\"";
             dbResultSet = dbStatement.executeQuery(sql);
             if (dbResultSet.next()) {
-                String hashed = "$2a" + dbResultSet.getString("password").substring(3);
-                String pw = cred[1];
-                System.out.println(hashed);
-                System.out.println(pw);
-                return BCrypt.checkpw(pw, hashed);
-            } else
-                return false; //No result
+                String token = dbResultSet.getString("access_token");
+                String username = dbResultSet.getString("username");
+                this.closeDB();
+                String[] cred = new String[2];
+                cred[0] = username; cred[1] = token;
+                return cred;
+            } else {
+                this.closeDB();
+                return null;
+            }
         } catch(SQLException se) {
-            System.err.println(se.getClass().getName() + ": " + se.getMessage());
+            this.closeDB();
+            throw se;
         }
-        return false;
     }
     
-    public Discussion[] getDiscussions() {
+    public Discussion[] getDiscussions() throws Exception {
         Discussion[] discussionSet;
+        this.connectDB();
         try {
             String sql;
             int discussionCount;
@@ -133,16 +141,17 @@ public class FlarumInterface {
                 discussionSet[i].title = dbResultSet.getString("title");
                 dbResultSet.next();
             }
-            
+            this.closeDB();
             return discussionSet;
         } catch(SQLException se) {
-            System.err.println(se.getClass().getName() + ": " + se.getMessage());
+            this.closeDB();
+            throw se;
         }
-        return null;
     }
     
-    public Post[] getPosts(int discussionId) {
+    public Post[] getPosts(int discussionId) throws Exception {
         Post[] postSet;
+        this.connectDB();
         try {
             String sql;
             int postCount;
@@ -171,11 +180,11 @@ public class FlarumInterface {
                 postSet[i].userName = dbResultSet.getString("username");
                 dbResultSet.next();
             }
-            
+            this.closeDB();
             return postSet;
         } catch(SQLException se) {
-            System.err.println(se.getClass().getName() + ": " + se.getMessage());
+            this.closeDB();
+            throw se;
         }
-        return null;
     }
 }
