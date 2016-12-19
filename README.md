@@ -7,6 +7,7 @@ Telnet forum server for cnVintage.org
 
 Working in progress.
 Lanterna used in this project: https://github.com/nbzwt/lanterna
+Use this with https://github.com/cnVintage/portal
 
 ## Todo
 - [X] Basic Telnet Server.
@@ -14,7 +15,7 @@ Lanterna used in this project: https://github.com/nbzwt/lanterna
 - [X] View topic.
 - [ ] Search.
 - [ ] User page.
-- [X] Login.
+- [X] Login (via IP whitelist & token).
 - [ ] Reply.
 - [ ] New discussion.
 - [ ] LaTeX render.
