@@ -57,15 +57,14 @@ public class ClientThread extends Thread {
             String ip = inetAddress.getHostAddress();
             System.out.println(ip);
             String cred[] = fif.verifyIP(ip);
-            if (cred == null) continueLoop = false; else
+            if (cred == null) continueLoop = false; else //IP not in whitelist
             {
                 fend.doCharsetSet();
                 Boolean success = fend.doLogin(cred);
                 fend.showMsg("提示", success?"登录成功":"登录失败");
-                if (success != true) continueLoop = false;
+                continueLoop = success;
             }
-            //fif.connectDB();
-            
+
             while (continueLoop) {
                 lastSelection = fend.doMenu();
                 switch (lastSelection) {
@@ -77,11 +76,9 @@ public class ClientThread extends Thread {
                             break;
                 }
             }
-            //fif.closeDB();
         } catch (java.lang.IllegalStateException e) {
-            System.out.print("One fucking bot.");
+            System.out.print("One fucking bot.");//IllegalStateException is most likely caused by a bot
         } catch (Exception e) {
-            //System.err.println(e.getClass().getName() + ": " + e.getMessage());
             e.printStackTrace();
         }finally {
             try {

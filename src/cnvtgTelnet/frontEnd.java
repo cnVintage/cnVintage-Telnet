@@ -242,10 +242,9 @@ public class FrontEnd {
         BasicWindow window = new BasicWindow();
         Panel panel = new Panel();
         Label title = new Label("");
-        //-1 for Scrollbar fix
+        //-1 for Scrollbar fix in GBK
         TextBox textBox = new TextBox(screen.getTerminalSize().withRelative(-1, -2)) {
-            //Little bit of hack, after create, handleKeyStroke would be called to
-            //set this to 0 and display content.
+            //handleKeyStroke would be called to set this to 0 and display content.
             private int currentPostPos = 1; 
 
             public void updatePost() {

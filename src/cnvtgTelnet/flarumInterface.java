@@ -29,7 +29,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
-import org.mindrot.BCrypt;
 
 public class FlarumInterface {
     private Connection dbConnect = null;
