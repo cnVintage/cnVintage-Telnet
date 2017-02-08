@@ -16,7 +16,6 @@
  */
 package cnvtgTelnet;
 
-import com.googlecode.lanterna.TerminalTextUtils;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
 
@@ -41,7 +40,7 @@ public class CnvtgTelnet {
         while (true) {
             TelnetTerminal telnetTerminal = server.acceptConnection();
             if (telnetTerminal != null) {
-                System.out.print("Connected");
+                System.out.println("Connected");
                 new ClientThread(telnetTerminal).start();
             }
         }

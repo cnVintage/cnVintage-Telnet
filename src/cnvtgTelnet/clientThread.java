@@ -27,10 +27,11 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import jpty.*;
 
 /**
  *
@@ -38,6 +39,7 @@ import java.net.InetSocketAddress;
  */
 public class ClientThread extends Thread {
     private final TelnetTerminal terminal;
+    private Pty pty;
     
     public ClientThread(TelnetTerminal terminal) {
         this.terminal = terminal;
@@ -45,51 +47,40 @@ public class ClientThread extends Thread {
     
     @Override
     public void run() {
-        FrontEnd fend;
-        FlarumInterface fif;
-        boolean continueLoop = true;
-        int lastSelection;
         try{
-            fend = new FrontEnd(terminal);
-            fif = new FlarumInterface("localhost", "root", "123456", "flarum");
-            InetSocketAddress socketAddress = (InetSocketAddress)terminal.getRemoteSocketAddress();
-            InetAddress inetAddress = socketAddress.getAddress();
-            String ip = inetAddress.getHostAddress();
-            System.out.println(ip);
-            String cred[] = fif.verifyIP(ip);
-            if (cred == null) continueLoop = false; else
-            {
-                fend.doCharsetSet();
-                Boolean success = fend.doLogin(cred);
-                fend.showMsg("提示", success?"登录成功":"登录失败");
-                if (success != true) continueLoop = false;
-            }
-            //fif.connectDB();
+            String[] cmd = { "/bin/sh", "-i"};
+            String[] env = { "TERM=xterm" };
             
-            while (continueLoop) {
-                lastSelection = fend.doMenu();
-                switch (lastSelection) {
-                    case 0: continueLoop = false;
-                            break;
-                    case 2: while ((lastSelection = fend.doDiscussionList(fif.getDiscussions()))!= -1) {
-                                fend.doPostView(fif.getPosts(lastSelection));
-                            }
-                            break;
-                }
-            }
+            pty = JPty.execInPTY(cmd[0], cmd, env);
+            
+            OutputStream oPty = pty.getOutputStream();
+            InputStream iPty = pty.getInputStream();
+            OutputStream oTelnet = terminal.getTerminalOutput();
+            InputStream iTelnet = terminal.getTerminalInput();
+            
+            ForwardThread clientForward = new ForwardThread(this, iPty, oTelnet);
+            clientForward.start();
+            ForwardThread serverForward = new ForwardThread(this, iTelnet, oPty);
+            serverForward.start();
             //fif.closeDB();
         } catch (java.lang.IllegalStateException e) {
-            System.out.print("One fucking bot.");
+            System.out.println("One fucking bot.");
         } catch (Exception e) {
             //System.err.println(e.getClass().getName() + ": " + e.getMessage());
             e.printStackTrace();
-        }finally {
-            try {
-                terminal.close();
-                System.out.println("Disconnected.");
-            }catch (IOException e) {
-                System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            }
         }
+        while (true) {
+            
+        }
+    }
+    
+    public synchronized void connectionBroken() {
+        try {
+            terminal.close();
+        } catch (Exception e) {}
+        try {
+            pty.close();
+        } catch (Exception e) {}
+        System.out.println("Disconnected.");
     }
 }
