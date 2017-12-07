@@ -37,9 +37,9 @@ import java.net.InetSocketAddress;
  * @author zephray
  */
 public class ClientThread extends Thread {
-    private final TelnetTerminal terminal;
+    private final Terminal terminal;
     
-    public ClientThread(TelnetTerminal terminal) {
+    public ClientThread(Terminal terminal) {
         this.terminal = terminal;
     }
     
@@ -52,19 +52,8 @@ public class ClientThread extends Thread {
         try{
             fend = new FrontEnd(terminal);
             fif = new FlarumInterface("localhost", "root", "123456", "flarum");
-            InetSocketAddress socketAddress = (InetSocketAddress)terminal.getRemoteSocketAddress();
-            InetAddress inetAddress = socketAddress.getAddress();
-            String ip = inetAddress.getHostAddress();
-            System.out.println(ip);
-            String cred[] = fif.verifyIP(ip);
-            if (cred == null) continueLoop = false; else //IP not in whitelist
-            {
-                fend.doCharsetSet();
-                Boolean success = fend.doLogin(cred);
-                fend.showMsg("提示", success?"登录成功":"登录失败");
-                continueLoop = success;
-            }
-
+            continueLoop = true;
+                
             while (continueLoop) {
                 lastSelection = fend.doMenu();
                 switch (lastSelection) {

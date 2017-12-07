@@ -47,7 +47,7 @@ import net.htmlparser.jericho.*;
  * @author zephray
  */
 public class FrontEnd {
-    private final TelnetTerminal terminal;
+    private final Terminal terminal;
     private final Screen screen;
     private final MultiWindowTextGUI gui;
     private int selection = 0;
@@ -61,43 +61,13 @@ public class FrontEnd {
             "  \\___|_| |_|\\_/  |_|_| |_|\\__\\__,_|\\__, |\\___|\n" +
             "                                    |___/      ";
     
-    public FrontEnd(TelnetTerminal terminal) throws IOException {
+    public FrontEnd(Terminal terminal) throws IOException {
         System.out.println("Creating a new frontEnd");
         this.terminal = terminal;
         this.screen = new TerminalScreen(terminal);
         screen.startScreen();
         this.gui = new MultiWindowTextGUI(this.screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
         lang = ResourceBundle.getBundle("cnvtgTelnet/zh_CN");
-    }
-    
-    public void doCharsetSet() throws IOException {
-        BasicWindow window = new BasicWindow();
-        Panel panel = new Panel();
-        Label lbl1 = new Label("如果你能读懂这句话，请选择UTF-8");
-        Label lbl2 = new Label("If it is gibberish, choose GBK.");
-        Label lbl3 = new Label("Please choose your charset:");
-        Button buttonUnicode = new Button("UTF-8", new Runnable() {
-            @Override
-            public void run() {
-                terminal.setCharset(Charset.forName("utf8"));
-                window.close();
-            }
-        });
-        Button buttonGBK = new Button("GBK", new Runnable() {
-            @Override
-            public void run() {
-                terminal.setCharset(Charset.forName("gbk"));
-                window.close();
-            }
-        });
-        panel.addComponent(lbl1);
-        panel.addComponent(lbl2);
-        panel.addComponent(lbl3);
-        panel.addComponent(buttonUnicode);
-        panel.addComponent(buttonGBK);
-        window.setComponent(panel);
-        window.setHints(Arrays.asList(Window.Hint.FULL_SCREEN, Window.Hint.NO_DECORATIONS));
-        this.gui.addWindowAndWait(window);
     }
     
     public void showMsg(String title, String msg) throws IOException {
