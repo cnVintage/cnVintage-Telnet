@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2017 zephray
  *
  * This program is free software: you can redistribute it and/or modify
